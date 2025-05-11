@@ -1,23 +1,56 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
 
-export default function PlanetsScreen() {
+const PlanetsScreen = () => {
+  const [planets, setPlanets] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("https://www.swapi.tech/api/planets")
+      .then((response) => response.json())
+      .then((data) => {
+        setPlanets(data.results);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching planets:", error);
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Planets Screen</Text>
+      <Text style={styles.title}>Star Wars Planets</Text>
+      {loading ? (
+        <Text>Loading...</Text>
+      ) : (
+        <FlatList
+          data={planets}
+          keyExtractor={(item) => item.uid}
+          renderItem={({ item }) => (
+            <Text style={styles.item}>{item.name}</Text>
+          )}
+        />
+      )}
     </View>
   );
-}
+};
+
+export default PlanetsScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#E6F0FF",
+    padding: 20,
+    marginTop: 40,
   },
-  text: {
-    fontSize: 20,
-    fontWeight: "bold",
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  item: {
+    fontSize: 18,
+    paddingVertical: 6,
   },
 });

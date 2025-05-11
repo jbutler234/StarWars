@@ -1,44 +1,42 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 
-const FilmsScreen = () => {
-  const [films, setFilms] = useState([]);
+const StarshipsScreen = () => {
+  const [starships, setStarships] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("https://www.swapi.tech/api/films")
-      .then(response => response.json())
-      .then(data => {
-        const filmData = data.result || data.results || [];
-        setFilms(filmData);
+    fetch("https://www.swapi.tech/api/starships")
+      .then((response) => response.json())
+      .then((data) => {
+        setStarships(data.results);
         setLoading(false);
       })
-      .catch(error => {
-        console.error("Error fetching films:", error);
+      .catch((error) => {
+        console.error("Error fetching starships:", error);
         setLoading(false);
       });
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Star Wars Films</Text>
+      <Text style={styles.title}>Star Wars Starships</Text>
       {loading ? (
         <Text>Loading...</Text>
       ) : (
         <FlatList
-          data={films}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => {
-            const title = item.properties?.title || item.title || 'Untitled';
-            return <Text style={styles.item}>{title}</Text>;
-          }}
+          data={starships}
+          keyExtractor={(item) => item.uid}
+          renderItem={({ item }) => (
+            <Text style={styles.item}>{item.name}</Text>
+          )}
         />
       )}
     </View>
   );
 };
 
-export default FilmsScreen;
+export default StarshipsScreen;
 
 const styles = StyleSheet.create({
   container: {
