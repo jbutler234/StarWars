@@ -1,33 +1,48 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Modal, Button } from 'react-native';
+import { View, Text, ScrollView, TextInput, Button, StyleSheet, Modal } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 
 const StarshipsScreen = () => {
   const [starships, setStarships] = useState([]);
-  const [selectedName, setSelectedName] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [swipeModalVisible, setSwipeModalVisible] = useState(false);
+  const [swipedItemName, setSwipedItemName] = useState('');
 
   useEffect(() => {
     fetch("https://www.swapi.tech/api/starships")
-      .then(res => res.json())
-      .then(data => setStarships(data.results))
-      .catch(err => console.error(err));
+      .then((res) => res.json())
+      .then((data) => setStarships(data.results))
+      .catch((err) => console.error(err));
   }, []);
 
-  const openModal = (name) => {
-    setSelectedName(name);
-    setModalVisible(true);
+  const handleSearch = () => {
+    setSearchModalVisible(true);
+  };
+
+  const handleSwipe = (name) => {
+    setSwipedItemName(name);
+    setSwipeModalVisible(true);
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Star Wars Starships</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Search for something..."
+        value={searchText}
+        onChangeText={setSearchText}
+      />
+      <Button title="Search" onPress={handleSearch} />
+
       <ScrollView>
         {starships.map((item) => (
           <Swipeable
             key={item.uid}
             renderRightActions={() => (
-              <Button title="View" onPress={() => openModal(item.name)} />
+              <Button title="View" onPress={() => handleSwipe(item.name)} />
             )}
           >
             <Text style={styles.item}>{item.name}</Text>
@@ -35,10 +50,19 @@ const StarshipsScreen = () => {
         ))}
       </ScrollView>
 
-      <Modal visible={modalVisible} transparent animationType="slide">
+      {/* Search Modal */}
+      <Modal visible={searchModalVisible} transparent animationType="slide">
         <View style={styles.modalView}>
-          <Text style={styles.modalText}>You swiped: {selectedName}</Text>
-          <Button title="Close" onPress={() => setModalVisible(false)} />
+          <Text style={styles.modalText}>You searched for: {searchText}</Text>
+          <Button title="Close" onPress={() => setSearchModalVisible(false)} />
+        </View>
+      </Modal>
+
+      {/* Swipe Modal */}
+      <Modal visible={swipeModalVisible} transparent animationType="slide">
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>You swiped: {swipedItemName}</Text>
+          <Button title="Close" onPress={() => setSwipeModalVisible(false)} />
         </View>
       </Modal>
     </View>
@@ -57,6 +81,14 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 10,
+  },
+  input: {
+    borderColor: '#ccc',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 5,
   },
   item: {
     fontSize: 18,
