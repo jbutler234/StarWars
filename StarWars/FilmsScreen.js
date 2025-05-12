@@ -5,19 +5,19 @@ import {
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { Swipeable } from 'react-native-gesture-handler';
+import { useNavigation } from '@react-navigation/native';
 import deathstar from './assets/DeathStar.jpg';
 
 const FilmsScreen = () => {
   const [films, setFilms] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [searchModalVisible, setSearchModalVisible] = useState(false);
-  const [swipeModalVisible, setSwipeModalVisible] = useState(false);
-  const [swipedTitle, setSwipedTitle] = useState('');
   const [isOffline, setIsOffline] = useState(false);
   const titleAnim = useRef(new Animated.Value(0)).current;
+  const navigation = useNavigation();
 
   useEffect(() => {
-    NetInfo.addEventListener(state => {
+    const unsubscribe = NetInfo.addEventListener(state => {
       setIsOffline(!state.isConnected);
     });
 
@@ -27,15 +27,16 @@ const FilmsScreen = () => {
       .catch((err) => console.error(err));
 
     Animated.timing(titleAnim, {
-      toValue: 1, duration: 800, useNativeDriver: true
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
     }).start();
+
+    return () => unsubscribe();
   }, []);
 
   const handleSearch = () => setSearchModalVisible(true);
-  const handleSwipe = (title) => {
-    setSwipedTitle(title);
-    setSwipeModalVisible(true);
-  };
+  const handleSwipe = (url) => navigation.navigate("FilmDetails", { url });
 
   return (
     <View style={styles.container}>
@@ -44,11 +45,17 @@ const FilmsScreen = () => {
           <Text style={styles.offlineText}>No internet connection.</Text>
         </View>
       )}
-
       <Image source={deathstar} style={styles.image} />
       <Animated.Text style={[styles.title, {
         opacity: titleAnim,
-        transform: [{ translateY: titleAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }]
+        transform: [
+          {
+            translateY: titleAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [-20, 0],
+            }),
+          },
+        ],
       }]}>
         Star Wars Films
       </Animated.Text>
@@ -64,11 +71,12 @@ const FilmsScreen = () => {
       <ScrollView>
         {films.map((item, index) => {
           const title = item.properties?.title || item.title || 'Untitled';
+          const url = item.url;
           return (
             <Swipeable
               key={index}
               renderRightActions={() => (
-                <Button title="View" onPress={() => handleSwipe(title)} />
+                <Button title="Details" onPress={() => handleSwipe(url)} />
               )}
             >
               <Text style={styles.item}>{title}</Text>
@@ -83,13 +91,6 @@ const FilmsScreen = () => {
           <Button title="Close" onPress={() => setSearchModalVisible(false)} />
         </View>
       </Modal>
-
-      <Modal visible={swipeModalVisible} transparent animationType="slide">
-        <View style={styles.modalView}>
-          <Text style={styles.modalText}>You swiped: {swipedTitle}</Text>
-          <Button title="Close" onPress={() => setSwipeModalVisible(false)} />
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -98,18 +99,48 @@ export default FilmsScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, marginTop: 40, paddingHorizontal: 20 },
-  image: { width: 120, height: 120, resizeMode: 'contain', alignSelf: 'center', marginBottom: 10 },
-  offlineBanner: { backgroundColor: '#fcc', padding: 10, marginBottom: 10, alignItems: 'center' },
-  offlineText: { color: 'red', fontWeight: 'bold' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
-  input: {
-    borderColor: '#ccc', borderWidth: 1, marginBottom: 10,
-    paddingHorizontal: 8, paddingVertical: 5, borderRadius: 5,
+  image: {
+    width: 120,
+    height: 120,
+    resizeMode: 'contain',
+    alignSelf: 'center',
+    marginBottom: 10,
   },
-  item: { fontSize: 18, paddingVertical: 10, borderBottomColor: '#ccc', borderBottomWidth: 1 },
+  offlineBanner: {
+    backgroundColor: '#fcc',
+    padding: 10,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  offlineText: { color: 'red', fontWeight: 'bold' },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  input: {
+    borderColor: '#ccc',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 5,
+  },
+  item: {
+    fontSize: 18,
+    paddingVertical: 10,
+    borderBottomColor: '#ccc',
+    borderBottomWidth: 1,
+  },
   modalView: {
-    marginTop: 250, margin: 30, backgroundColor: 'white',
-    padding: 20, borderRadius: 10, alignItems: 'center', elevation: 5,
+    marginTop: 250,
+    margin: 30,
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    elevation: 5,
   },
   modalText: { fontSize: 18, marginBottom: 10 },
 });
