@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TextInput, Button, StyleSheet, Modal } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, ScrollView, TextInput, Button, StyleSheet, Modal, Animated } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 
 const StarshipsScreen = () => {
@@ -9,16 +9,22 @@ const StarshipsScreen = () => {
   const [swipeModalVisible, setSwipeModalVisible] = useState(false);
   const [swipedItemName, setSwipedItemName] = useState('');
 
+  const titleAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     fetch("https://www.swapi.tech/api/starships")
       .then((res) => res.json())
       .then((data) => setStarships(data.results))
       .catch((err) => console.error(err));
+
+    Animated.timing(titleAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
-  const handleSearch = () => {
-    setSearchModalVisible(true);
-  };
+  const handleSearch = () => setSearchModalVisible(true);
 
   const handleSwipe = (name) => {
     setSwipedItemName(name);
@@ -27,7 +33,12 @@ const StarshipsScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Star Wars Starships</Text>
+      <Animated.Text style={[styles.title, {
+        opacity: titleAnim,
+        transform: [{ translateY: titleAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }],
+      }]}>
+        Star Wars Starships
+      </Animated.Text>
 
       <TextInput
         style={styles.input}
@@ -50,7 +61,6 @@ const StarshipsScreen = () => {
         ))}
       </ScrollView>
 
-      {/* Search Modal */}
       <Modal visible={searchModalVisible} transparent animationType="slide">
         <View style={styles.modalView}>
           <Text style={styles.modalText}>You searched for: {searchText}</Text>
@@ -58,7 +68,6 @@ const StarshipsScreen = () => {
         </View>
       </Modal>
 
-      {/* Swipe Modal */}
       <Modal visible={swipeModalVisible} transparent animationType="slide">
         <View style={styles.modalView}>
           <Text style={styles.modalText}>You swiped: {swipedItemName}</Text>
@@ -72,16 +81,8 @@ const StarshipsScreen = () => {
 export default StarshipsScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    marginTop: 40,
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
+  container: { flex: 1, marginTop: 40, paddingHorizontal: 20 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10 },
   input: {
     borderColor: '#ccc',
     borderWidth: 1,
@@ -90,12 +91,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 5,
   },
-  item: {
-    fontSize: 18,
-    paddingVertical: 10,
-    borderBottomColor: '#ccc',
-    borderBottomWidth: 1,
-  },
+  item: { fontSize: 18, paddingVertical: 10, borderBottomColor: '#ccc', borderBottomWidth: 1 },
   modalView: {
     marginTop: 250,
     margin: 30,
@@ -105,8 +101,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 5,
   },
-  modalText: {
-    fontSize: 18,
-    marginBottom: 10,
-  },
+  modalText: { fontSize: 18, marginBottom: 10 },
 });
